@@ -251,6 +251,11 @@ See `example/sweep.fish` for a trivial sweep over a few values.
   to create the exact field `c.name` even if it does not exist. This can be useful
   in rare circumstances where the codebase uses the pattern `c.get("name", default)`
   for things, and the `get_config` doesn't include a value for `name`. Use with care.
+- The `FinalConfig` has a `.to_json()` and `.to_flat_json()` utils that returns a
+  string that's the json serialized config, but with non-json-serializable values
+  replaced by an explanatory string. It's for logging/storing of configs for humans.
+- Similarly, there's the `sws.from_json` and `sws.from_flat_json` counterparts, they
+  are provided purely for human analysis and convenience, since json is lossy wrt sws.
 
 # Installing
 ```bash
@@ -274,8 +279,7 @@ python -m pytest
 Probably overkill:
 - Auto-generate a commandline --help?
 - Auto-generate a terminal UI to browse/change config values on `finalize()` could be fun.
-- Rewrite the finalization algorithm. It currently is obviously vibe-coded shit;
-  it's correct, but way over-complicated and could be much simpler.
+- Keep track of which fields are affected by arg overwrites, and note that in pretty-print?
 
 # Lore
 

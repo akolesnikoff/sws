@@ -1,4 +1,9 @@
 from collections.abc import Mapping
+from copy import copy
+import difflib
+import json
+import os
+
 from .simpleeval import EvalWithCompoundTypes
 
 
@@ -93,7 +98,6 @@ class Config(_BaseView):
 
     def _with_prefix(self, prefix):
         """A shallow copy (sharing store/cycle) with new prefix."""
-        from copy import copy
         new = copy(self)
         new._prefix = prefix
         return new
@@ -201,7 +205,6 @@ class Config(_BaseView):
             suffix = suffix.removeprefix("c.")
             matches = [k for k in self._store if ("." + k).endswith("." + suffix)]
             if not matches:
-                import difflib
                 # First, try fuzzy match against full dotted keys
                 suggestions = difflib.get_close_matches(suffix, self._store)
                 # Also try fuzzy match against last segments (common typo case),
@@ -238,6 +241,10 @@ class Config(_BaseView):
             return final, unused
         else:
             return final
+
+
+def json_invalid_to_string(obj):
+    return f"<non-jsonable object of type {type(obj).__name__}; repr: {repr(obj)}>"
 
 
 class FinalConfig(_BaseView):
@@ -317,3 +324,17 @@ class FinalConfig(_BaseView):
                 disp = _dim(".".join(parts[:-1]) + ".") + _bold(parts[-1])
             lines.append(f"{disp}: {_blue(_fmt_val(flat[full_key]))}")
         return "\n".join(lines)
+
+    def to_json(self, default=json_invalid_to_string, **json_kwargs):
+        return json.dumps(self.to_dict(), default=default, **json_kwargs)
+
+    def to_flat_json(self, default=json_invalid_to_string, **json_kwargs):
+        return json.dumps(self.to_flat_dict(), default=default, **json_kwargs)
+
+
+def from_json(data):
+    return FinalConfig(_store=dict(_flatten("", json.loads(data))), _prefix="")
+
+
+def from_flat_json(data):
+    return FinalConfig(_store=json.loads(data), _prefix="")
