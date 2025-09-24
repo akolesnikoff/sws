@@ -184,3 +184,15 @@ def test_create_or_set_with_walrus_top_level_and_nested():
     import pytest
     with pytest.raises(ValueError):
         c2.finalize(["model:=0"])  # group exists under 'model', cannot assign leaf
+
+
+def test_override_prefers_exact_key_when_using_c_prefix():
+    c = Config()
+    c.foo = 1
+    c.bar.baz.foo = 2
+    with pytest.raises(AttributeError):
+        c.finalize(["foo=32"])
+
+    f = c.finalize(["c.foo=32"])
+    assert f.foo == 32
+    assert f.bar.baz.foo == 2

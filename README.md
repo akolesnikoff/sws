@@ -131,6 +131,8 @@ from interpreting `*` as wildcard, and (2) because I used spaces.
 For convenience, the keyname can be shortened to the shortest unique suffix
 across the _whole_ config (i.e. all nesting levels).
 For example, `model.head.lr` can be shortened to `head.lr` or `lr` if unambiguous.
+In the case of ambiguity, `sws` errs on the cautious side and error out.
+You can always specify the full name starting with `c.` to be perfectly unambiguous.
 
 ## `sws.run` and suggested code structure
 

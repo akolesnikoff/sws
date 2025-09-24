@@ -199,11 +199,14 @@ class Config(_BaseView):
                 unused.append(token)
                 continue
 
-            suffix, v = token.split("=", 1)
+            raw_key, v = token.split("=", 1)
 
             # Find the keys which have this suffix. If multiple, provide error.
-            suffix = suffix.removeprefix("c.")
-            matches = [k for k in self._store if ("." + k).endswith("." + suffix)]
+            suffix = raw_key.removeprefix("c.")
+            if raw_key.startswith("c.") and suffix in self._store:
+                matches = [suffix]
+            else:
+                matches = [k for k in self._store if ("." + k).endswith("." + suffix)]
             if not matches:
                 # First, try fuzzy match against full dotted keys
                 suggestions = difflib.get_close_matches(suffix, self._store)
@@ -222,9 +225,11 @@ class Config(_BaseView):
                     msg += "; did you mean:\n" + "\n".join(suggestions)
                 raise AttributeError(msg)
             if len(matches) > 1:  # Ambiguous suffix; help user disambiguate
-                raise AttributeError(
-                    f"Ambiguous override key {suffix!r}; candidates:\n"
-                    + '\n'.join(sorted(matches)))
+                msg = f"Ambiguous override key {suffix!r}; candidates:\n" \
+                      + '\n'.join(sorted(matches))
+                if suffix in self._store and not raw_key.startswith("c."):
+                    msg += f"\nHint: use 'c.{suffix}=VALUE' to target that exact key."
+                raise AttributeError(msg)
 
             self._store[matches[0]] = parse_val(v)
 
