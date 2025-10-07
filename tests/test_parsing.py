@@ -156,9 +156,9 @@ def test_overrides_expressions_with_c_view():
     # Reference current config state via c
     f1 = base.finalize(["foo=c.lr", "bar=c.model.width"])
     assert f1.foo == 1.0 and f1.bar == 128
-    # Order matters: left-to-right application of overrides
+    # Expressions referencing c are evaluated against the finalized values
     f2 = base.finalize(["foo=c.lr", "lr=3", "bar=c.lr"])
-    assert f2.foo == 1.0 and f2.bar == 3
+    assert f2.foo == 3 and f2.bar == 3
 
 
 def test_create_or_set_with_walrus_top_level_and_nested():
@@ -196,3 +196,23 @@ def test_override_prefers_exact_key_when_using_c_prefix():
     f = c.finalize(["c.foo=32"])
     assert f.foo == 32
     assert f.bar.baz.foo == 2
+
+
+def test_override_c_reference_tracks_late_assignments():
+    c = Config(lr=0.1, ratio=0.0)
+    f = c.finalize(["ratio=c.lr", "lr=0.2"])
+    assert f.lr == pytest.approx(0.2)
+    assert f.ratio == pytest.approx(0.2)
+
+
+def test_order_independent_new_keys_with_c_reference():
+    c = Config()
+    f = c.finalize(["name:=f'hi-{c.xid}-{c.wid}'", "xid:=32", "wid:=11"])
+    assert f.name == "hi-32-11"
+    assert f.xid == 32 and f.wid == 11
+
+
+def test_override_c_reference_missing_key_keeps_string():
+    c = Config()
+    f = c.finalize(["name:=f'hi-{c.xid}'"])
+    assert f.name == "f'hi-{c.xid}'"

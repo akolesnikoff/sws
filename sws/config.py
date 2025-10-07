@@ -182,10 +182,12 @@ class Config(_BaseView):
         # dotted key (no suffix matching, creates if missing).
         evaluator = EvalWithCompoundTypes(names={"c": self, "Fn": Fn})
         def parse_val(val):
-            try:
-                return evaluator.eval(val)
-            except Exception:  # Assume it's a non-quoted string
-                return val
+            def _lazy():
+                try:
+                    return evaluator.eval(val)
+                except Exception:
+                    return val
+            return _lazy
 
         unused = []
         for token in list(argv or []):
