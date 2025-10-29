@@ -160,3 +160,14 @@ def test_dict_conversion():
     c = Config(**d).finalize()
     assert c.to_flat_dict() == d
     assert c.model.to_flat_dict() == {'width': 128, 'depth': 4}
+
+
+def test_lazy_subdicts_finalization():
+    c = Config()
+    c.a = {'a': 1}
+    c.b = lambda: c.a
+    c = c.finalize()
+
+    from sws.config import FinalConfig
+    assert isinstance(c['a'], FinalConfig)
+    assert isinstance(c['b'], FinalConfig)

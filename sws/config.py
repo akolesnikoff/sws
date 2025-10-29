@@ -238,6 +238,10 @@ class Config(_BaseView):
         # Now go over all items and resolve those that were lazy.
         finalized_store = {k: self[k] for k in self._store}
 
+        for k, v in list(finalized_store.items()):
+            if isinstance(v, Config):
+                finalized_store[k] = FinalConfig(finalized_store, v._prefix)
+
         self._phase = "building"
         final = FinalConfig(
             _store=finalized_store,
